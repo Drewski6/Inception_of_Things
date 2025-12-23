@@ -185,7 +185,9 @@ HINT:   sudo /usr/sbin/kvm-ok
 VBoxManage modifyvm "IoT" --nested-hw-virt on
 ```
 
-- Re run diagnostic commands in vmx
+- Boot up the VM again
+
+- Re run diagnostic commands
 
 ```bash
 egrep -c '(vmx|svm)' /proc/cpuinfo
@@ -266,6 +268,23 @@ Bringing machine 'default' up with 'libvirt' provider...
 
 - Take a snapshot!
 
+- Now you can use `vagrant ssh` to see if you can ssh into your new machine.
 
+- Confirm the machine version and info with this command:
 
+```bash
+lsb_release -a
+# output
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.3 LTS
+Release:        22.04
+Codename:       jammy
+```
+
+- Use the `logout` command to logout.
+
+- At this point, I've been following a hybrid tutorial of the official vagrant tutorial and some from chatgpt (because my setup was different from the one in the tutorial). However, with a running machine, I can pick up from the tutorial where a virtual machine is successfully installed:
+
+- Here: https://developer.hashicorp.com/vagrant/tutorials/get-started/setup-project#manage-the-environment-lifecycle
 
