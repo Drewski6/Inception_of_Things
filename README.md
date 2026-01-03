@@ -20,6 +20,14 @@ git clone <IoT git repo link>
 
 - Take a snapshot of initial setup
 
+## Possible Host Machine Issue
+
+- If you get the error where the OS doesnt want to run any VMs because another hypervisor is using VT-x (This happens when I restart Ubuntu), use this command:
+
+```bash
+sudo rmmod kvm_intel && sudo rmmod kvm
+```
+
 ## Install Vagrant
 
 - Download vagrant package
