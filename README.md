@@ -1,14 +1,31 @@
 # Inception_of_Things
 
+- This is my Inception of Things project. Here, I'm documenting the steps I took to install all the necessary software on my host and inside the VM.
+- Specifically, these are the commands I used in the terminal or in Virtual Box to set things up.
+
+## Create VM in Virtual Box
+
+- You know how to do this. I made a small ubuntu desktop VM.
+
+## Possible Host Machine Issue
+
+- If you get the error where the OS doesnt want to run any VMs because another hypervisor is using VT-x (this most commonly happens when I restart Ubuntu), use this command:
+
+```bash
+sudo rmmod kvm_intel && sudo rmmod kvm
+```
+
 ## Starting VM
 
-- Enable portforwarding with settings:
+- Enable portforwarding in Virtual Box on the host with settings:
 
 Name   | Protocol | Host IP   | Host Port | Guest IP | Guest Port
 -------|----------|-----------|-----------|----------|-----------
 Rule 1 | TCP      | 127.0.0.1 | 2233      | [Blank]  | 22        
 
-- Setup Commands
+- SSH into VM using VS Code (if you want).
+
+## Setup Commands inside VM
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -19,14 +36,6 @@ git clone <IoT git repo link>
 ```
 
 - Take a snapshot of initial setup
-
-## Possible Host Machine Issue
-
-- If you get the error where the OS doesnt want to run any VMs because another hypervisor is using VT-x (This happens when I restart Ubuntu), use this command:
-
-```bash
-sudo rmmod kvm_intel && sudo rmmod kvm
-```
 
 ## Install Vagrant
 
@@ -93,7 +102,7 @@ vagrant init generic/ubuntu2404
 
 ```Vagrantfile
 Vagrant.configure("2") do |config|
-  config.vm.box = "generic/ubuntu2404"
+  config.vm.box = "generic/ubuntu2404" # will change this to the latest stable version available
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
