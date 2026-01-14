@@ -308,10 +308,15 @@ Codename:       jammy
 
 ## Configuring Vagrant via the Vagrantfile
 
-- First I defined 2 boxes with the appropriate names in the Vagrantfile
+1. I defined 2 boxes with the appropriate names in the Vagrantfile
 
+2. I added a network for each of the VMs following the suggested setup from the subject
 
+3. I created the provider configuration also following the subject.
+  - kvm driver because that's what my computer wanted (couldn't run nested VirtualBox machines).
+  - 1 cpu and 512 MB of memory
 
+4. 
 
 
 
