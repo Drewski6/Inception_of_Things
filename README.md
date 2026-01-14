@@ -306,6 +306,11 @@ Codename:       jammy
 - Here: https://developer.hashicorp.com/vagrant/tutorials/get-started/setup-project#manage-the-environment-lifecycle
 
 
+## Configuring Vagrant via the Vagrantfile
+
+- First I defined 2 boxes with the appropriate names in the Vagrantfile
+
+
 
 
 
