@@ -316,7 +316,14 @@ Codename:       jammy
   - kvm driver because that's what my computer wanted (couldn't run nested VirtualBox machines).
   - 1 cpu and 512 MB of memory
 
-4. 
+4. I created 2 provisioners
+  - One is an inline shell command
+  - The other is a file on the host called bootstrap.sh in the scripts folder
+  - These are run in order from top to bottom in the Vagrantfile so you can organize how you want your provisioning to work.
+
+  - Read more on provisioning here: https://developer.hashicorp.com/vagrant/docs/provisioning/shell
+
+5. 
 
 
 

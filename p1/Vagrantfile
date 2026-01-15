@@ -11,10 +11,10 @@ Vagrant.configure("2") do |config|
       libvirt.memory = 512
       libvirt.cpus = 1
     end
-    control.vm.provision "shell", inline: <<-SHELL # note that I changed this to control.vm.etc from config.vm.etc from the subject. config seems like it would be global for me. so I dont know why we would use it inisde this block so I changed it. But if this doesn't work in the future, come back and change this.
-      echo "hello world"
+    control.vm.provision "shell", inline: <<-SHELL
+      echo "This is an inline shell command!"
     SHELL
-    # control.vm.provision "shell", path: REDACTED
+    control.vm.provision "shell", path: "scripts/bootstrap.sh"
   end
 
   config.vm.define "dpentlanSW" do |control|
