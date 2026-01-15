@@ -323,6 +323,20 @@ Codename:       jammy
 
   - Read more on provisioning here: https://developer.hashicorp.com/vagrant/docs/provisioning/shell
 
+  - 2 Examples for future reference:
+
+```Vagrantfile
+control.vm.provision "shell", inline: <<-SHELL
+  echo "This is an inline shell command!"
+  sudo apt update
+  sudo apt upgrade -y
+SHELL
+```
+
+```Vagrantfile
+control.vm.provision "shell", path: "scripts/bootstrap.sh"
+```
+
 5. 
 
 
