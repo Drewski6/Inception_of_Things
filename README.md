@@ -337,15 +337,28 @@ SHELL
 control.vm.provision "shell", path: "scripts/bootstrap.sh"
 ```
 
-5. 
 
+## Installing Kubernetes
 
+1. Curl the install scripts (skip this step)
 
+```sh
+curl -sfL https://get.k3s.io | sh - 
+sudo k3s kubectl get node 
+```
 
+- I'm realizing the example in the subject says to run these from inside the vagrant VMs. I don't know if it *cant* be run in the host VM, but I mistakenly installed it there first.
 
+- Uninstalled k3s on my Ubuntu VM (the host for the vagrant VMs) using this command: `sudo /usr/local/bin/k3s-uninstall.sh`
 
+1 (Again). Curl the install scripts inside the vagrant VMs
 
+- Used the above `curl` command inside both containers and I have a feeling this was not the right setup. I belive this makes 2 master node. I'll revisit this a little later.
 
+- Looks like to connect the server and worker, there will be some more involved setup.
+  - I should consider doing this manually at first and making a script to automate.
+  - The process will be different for both the server and the worker.
+  
 
 
 
