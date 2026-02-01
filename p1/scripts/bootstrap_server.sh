@@ -14,7 +14,10 @@ echo "Running bootstrap_server.sh"
 
 sudo apt update
 sudo apt upgrade -y
-
 sudo apt install -y curl
+
 # Install k3s
-curl -sfL https://get.k3s.io | sh - 
+# curl -sfL https://get.k3s.io | \
+#   sudo INSTALL_K3S_VERSION="${K3S_VERSION}" bash - server --node-name "${SERVER_HOST}" --tls-san "${SERVER_IP}" --tls-san "${SERVER_HOST}"
+
+curl -sfL https://get.k3s.io | sh -

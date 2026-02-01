@@ -367,6 +367,7 @@ sudo k3s kubectl get node
 
 
 
+
 # List of Commands used during vagrant tutorial when I was doing that
 
 - Here is a history of the commands I used when doing the vagrant tutorial
