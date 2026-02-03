@@ -15,8 +15,8 @@ TOKEN_DST="${TOKEN_DST_DIR}/token"
 
 echo "Running bootstrap_server.sh"
 
-# sudo apt update
-# sudo apt upgrade -y
+sudo apt update
+sudo apt upgrade -y
 sudo apt install -y curl
 
 # Install k3s
@@ -43,6 +43,3 @@ echo "k3s API in ready state."
 # Copy token to a destination file for access via ssh.
 sudo cat "$TOKEN_SRC" | tee "$TOKEN_DST" > /dev/null
 sudo chmod 644 "$TOKEN_DST"
-
-# show token to stdout for debug
-cat "$TOKEN_DST"

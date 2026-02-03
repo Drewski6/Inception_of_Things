@@ -42,12 +42,17 @@ Vagrant.configure("2") do |config|
     control.vm.provision "file", 
       source: "confs/k3s-config-worker.yaml",
       destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "file",
+      source: "confs/ssh/k3s_bootstrap_ed25519",
+      destination: "/home/vagrant/k3s_bootstrap_ed25519"
     control.vm.provision "shell", inline: <<-SHELL
       set -eux
       sudo mkdir -p /etc/rancher/k3s
       sudo mv /home/vagrant/k3s-config.yaml /etc/rancher/k3s/config.yaml
       sudo chown root:root /etc/rancher/k3s/config.yaml
       sudo chmod 644 /etc/rancher/k3s/config.yaml
+      # move ssh key into .ssh folder
+      mv /home/vagrant/k3s_bootstrap_ed25519 /home/vagrant/.ssh/k3s_bootstrap_ed25519
     SHELL
     control.vm.provision "shell", path: "scripts/bootstrap_worker.sh"
   end

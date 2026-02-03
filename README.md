@@ -442,6 +442,28 @@ end
 ssh-keygen -t ed25519 -f confs/ssh/k3s_bootstrap_ed25519 -N "" -C "k3s-bootstrap"
 ```
 
+  A. Server Portion:
+
+- Then we copy the public key into the server during provisioning. 
+
+```Vagrantfile
+control.vm.provision "file",
+  source: "confs/ssh/k3s_bootstrap_ed25519.pub",
+  destination: "/home/vagrant/k3s_bootstrap_ed25519.pub"
+```
+
+- We take that copied file's contents (the authroized key for the worker) and put it in the server's authorized_keys file (also in the provisioning step)
+
+```bash
+# copy ssh pub into authorized_keys and delete
+cat /home/vagrant/k3s_bootstrap_ed25519.pub | tee -a /home/vagrant/.ssh/authorized_keys > /dev/null
+rm -f /home/vagrant/k3s_bootstrap_ed25519.pub
+```
+
+ B. Worker Portion
+
+
+
 
 
 
