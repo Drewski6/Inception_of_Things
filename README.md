@@ -434,6 +434,15 @@ end
 - At this point, if you start the server first with `vagrant up dpentlanS` and then ssh into the server with `vagrant ssh dpentlanS` then you can cat the node token with `sudo cat /var/lib/rancher/k3s/server/node-token` and put that token into the setup script for the worker (dpentlanSW). and then run `vagrant up dpentlanSW` and the worker will connect to the server corrctly. You can also verify this from the server by running `sudo k3s kubectl get nodes -o wide` from inside the server node (`vagrant ssh dpentlanS` from the host) and this will show both the server and worker working correctly.
 - However, we need to automate this step.
 
+- Probably will use ssh so the workers can access the server and get the token
+
+- Used this command to generate the keys in my project
+
+```bash
+ssh-keygen -t ed25519 -f confs/ssh/k3s_bootstrap_ed25519 -N "" -C "k3s-bootstrap"
+```
+
+
 
 
 

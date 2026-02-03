@@ -15,8 +15,8 @@ TOKEN_DST="${TOKEN_DST_DIR}/token"
 
 echo "Running bootstrap_server.sh"
 
-sudo apt update
-sudo apt upgrade -y
+# sudo apt update
+# sudo apt upgrade -y
 sudo apt install -y curl
 
 # Install k3s
