@@ -9,6 +9,7 @@ SERVER_HOST=dpentlanS
 WORKER_HOST=dpentlanSW
 SERVER_IP=192.168.56.110
 WORKER_IP=192.168.56.111
+TOKEN_FILE="/home/vagrant/shared/token"
 
 echo "Running bootstrap_server.sh"
 
@@ -17,7 +18,8 @@ sudo apt upgrade -y
 sudo apt install -y curl
 
 # Install k3s
-# curl -sfL https://get.k3s.io | \
-#   sudo INSTALL_K3S_VERSION="${K3S_VERSION}" bash - server --node-name "${SERVER_HOST}" --tls-san "${SERVER_IP}" --tls-san "${SERVER_HOST}"
-
 curl -sfL https://get.k3s.io | sh -
+
+echo "This is an automated update to the test file" | sudo tee ${TOKEN_FILE} > /dev/null
+
+echo "Finished server script. exiting now. expect rsync for VM after."

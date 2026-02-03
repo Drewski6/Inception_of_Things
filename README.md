@@ -351,16 +351,88 @@ sudo k3s kubectl get node
 
 - Uninstalled k3s on my Ubuntu VM (the host for the vagrant VMs) using this command: `sudo /usr/local/bin/k3s-uninstall.sh`
 
-1 (Again). Curl the install scripts inside the vagrant VMs
+1. (Again) Curl the install scripts inside the vagrant VMs
 
 - Used the above `curl` command inside both containers and I have a feeling this was not the right setup. I belive this makes 2 master node. I'll revisit this a little later.
 
 - Looks like to connect the server and worker, there will be some more involved setup.
   - I should consider doing this manually at first and making a script to automate.
   - The process will be different for both the server and the worker.
+
+- Server gets the basic command from the kubernetes docs
   
+```sh
+curl -sfL https://get.k3s.io | sh -
+```
 
+- Worker gets a slightly different command (also from docs) but for setting up the agent
 
+```sh
+curl -sfL https://get.k3s.io | K3S_URL=https://${SERVER_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -
+```
+
+2. Set up the networking
+
+- After this, I configured the networking settings in the `Vagrantfile`.
+- I also added some other provisioning steps
+- Vagrantfile now looks like this.
+
+```Vagrantfile
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "generic/ubuntu2310"
+  config.vm.box_version = "4.3.12"
+
+  config.vm.define "dpentlanS" do |control|
+    control.vm.hostname = "dpentlanS"
+    control.vm.network "private_network", ip: "192.168.56.110"
+    control.vm.provider :libvirt do |libvirt|
+      libvirt.driver = "kvm"
+      libvirt.memory = 1024 # may need to lower to 512 for school computers
+      libvirt.cpus = 2 # may need to lower to 1 for school computers
+    end
+    control.vm.synced_folder "./confs/shared", "/vagrant", type: "rsync"
+    control.vm.provision "file", 
+      source: "confs/k3s-config-server.yaml",
+      destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      sudo mkdir -p /etc/rancher/k3s
+      sudo mv /home/vagrant/k3s-config.yaml /etc/rancher/k3s/config.yaml
+      sudo chown root:root /etc/rancher/k3s/config.yaml
+      sudo chmod 644 /etc/rancher/k3s/config.yaml
+    SHELL
+    control.vm.provision "shell", path: "scripts/bootstrap_server.sh"
+  end
+
+  config.vm.define "dpentlanSW" do |control|
+    control.vm.hostname = "dpentlanSW"
+    control.vm.network "private_network", ip: "192.168.56.111"
+    control.vm.provider :libvirt do |libvirt|
+      libvirt.driver = "kvm"
+      libvirt.memory = 1024 # may need to lower to 512 for school computers
+      libvirt.cpus = 2 # may need to lower to 1 for school computers
+    end
+    control.vm.synced_folder "./confs/shared", "/vagrant", type: "rsync"
+    control.vm.provision "file", 
+      source: "confs/k3s-config-worker.yaml",
+      destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      sudo mkdir -p /etc/rancher/k3s
+      sudo mv /home/vagrant/k3s-config.yaml /etc/rancher/k3s/config.yaml
+      sudo chown root:root /etc/rancher/k3s/config.yaml
+      sudo chmod 644 /etc/rancher/k3s/config.yaml
+    SHELL
+    control.vm.provision "shell", path: "scripts/bootstrap_worker.sh"
+  end
+end
+```
+
+3. Synchronize the startups
+
+- At this point, if you start the server first with `vagrant up dpentlanS` and then ssh into the server with `vagrant ssh dpentlanS` then you can cat the node token with `sudo cat /var/lib/rancher/k3s/server/node-token` and put that token into the setup script for the worker (dpentlanSW). and then run `vagrant up dpentlanSW` and the worker will connect to the server corrctly. You can also verify this from the server by running `sudo k3s kubectl get nodes -o wide` from inside the server node (`vagrant ssh dpentlanS` from the host) and this will show both the server and worker working correctly.
+- However, we need to automate this step.
 
 
 
