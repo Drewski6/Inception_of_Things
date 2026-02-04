@@ -3,11 +3,13 @@
 - This is my Inception of Things project. Here, I'm documenting the steps I took to install all the necessary software on my host and inside the VM.
 - Specifically, these are the commands I used in the terminal or in Virtual Box to set things up.
 
-## Create VM in Virtual Box
+## Part 1
+
+### Create VM in Virtual Box
 
 - You know how to do this. I made a small ubuntu desktop VM.
 
-## Possible Host Machine Issue
+### Possible Host Machine Issue
 
 - If you get the error where the OS doesnt want to run any VMs because another hypervisor is using VT-x (this most commonly happens when I restart Ubuntu), use this command:
 
@@ -15,7 +17,7 @@
 sudo rmmod kvm_intel && sudo rmmod kvm
 ```
 
-## Starting VM
+### Starting VM
 
 - Enable portforwarding in Virtual Box on the host with settings:
 
@@ -25,7 +27,7 @@ Rule 1 | TCP      | 127.0.0.1 | 2233      | [Blank]  | 22
 
 - SSH into VM using VS Code (if you want).
 
-## Setup Commands inside VM
+### Setup Commands inside VM
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -37,7 +39,7 @@ git clone <IoT git repo link>
 
 - Take a snapshot of initial setup
 
-## Install Vagrant
+### Install Vagrant
 
 - Download vagrant package
 
@@ -306,7 +308,7 @@ Codename:       jammy
 - Here: https://developer.hashicorp.com/vagrant/tutorials/get-started/setup-project#manage-the-environment-lifecycle
 
 
-## Configuring Vagrant via the Vagrantfile
+### Configuring Vagrant via the Vagrantfile
 
 1. I defined 2 boxes with the appropriate names in the Vagrantfile
 
@@ -338,7 +340,7 @@ control.vm.provision "shell", path: "scripts/bootstrap.sh"
 ```
 
 
-## Installing Kubernetes
+### Installing Kubernetes
 
 1. Curl the install scripts (skip this step)
 
@@ -461,6 +463,194 @@ rm -f /home/vagrant/k3s_bootstrap_ed25519.pub
 ```
 
  B. Worker Portion
+
+- Add the ssh key during provisioning
+
+```Vagrantfile
+control.vm.provision "file",
+  source: "confs/ssh/k3s_bootstrap_ed25519",
+  destination: "/home/vagrant/k3s_bootstrap_ed25519"
+```
+
+- and in the script portion of the provisioning.
+
+```bash
+# move ssh key into .ssh folder
+mv /home/vagrant/k3s_bootstrap_ed25519 /home/vagrant/.ssh/k3s_bootstrap_ed25519
+```
+
+- Adding a loop that attempts the ssh connection and looks for the token file in the worker script
+
+```bash
+until ssh -i /home/vagrant/.ssh/k3s_bootstrap_ed25519 -o StrictHostKeyChecking=no -o ConnectTimeout=2 vagrant@"$SERVER_IP" "sudo test -s $TOKEN_DST"; do
+  echo "waiting for server token..."
+  sleep 2
+done
+
+K3S_TOKEN="$(ssh -i /home/vagrant/.ssh/k3s_bootstrap_ed25519 -o StrictHostKeyChecking=no -o ConnectTimeout=2 vagrant@"$SERVER_IP" "sudo cat $TOKEN_DST")"
+```
+
+- Server and worker scripts now orchestrate the token file transfer via ssh.
+  - I'll copy paste my Vagrantfile and worker and server scripts here so you can see them.
+
+```Vagrantfile
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "generic/ubuntu2310"
+  config.vm.box_version = "4.3.12"
+
+  config.vm.define "dpentlanS" do |control|
+    control.vm.hostname = "dpentlanS"
+    control.vm.network "private_network", ip: "192.168.56.110"
+    control.vm.provider :libvirt do |libvirt|
+      libvirt.driver = "kvm"
+      libvirt.memory = 1024 # may need to lower to 512 for school computers
+      libvirt.cpus = 2 # may need to lower to 1 for school computers
+    end
+    control.vm.provision "file", 
+      source: "confs/k3s-config-server.yaml",
+      destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "file",
+      source: "confs/ssh/k3s_bootstrap_ed25519.pub",
+      destination: "/home/vagrant/k3s_bootstrap_ed25519.pub"
+    control.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      # move k3s config file and give correct permissions
+      sudo mkdir -p /etc/rancher/k3s
+      sudo mv /home/vagrant/k3s-config.yaml /etc/rancher/k3s/config.yaml
+      sudo chown root:root /etc/rancher/k3s/config.yaml
+      sudo chmod 644 /etc/rancher/k3s/config.yaml
+      # copy ssh pub into authorized_keys and delete
+      cat /home/vagrant/k3s_bootstrap_ed25519.pub | tee -a /home/vagrant/.ssh/authorized_keys > /dev/null
+      rm -f /home/vagrant/k3s_bootstrap_ed25519.pub
+    SHELL
+    control.vm.provision "shell", path: "scripts/bootstrap_server.sh"
+  end
+
+  config.vm.define "dpentlanSW" do |control|
+    control.vm.hostname = "dpentlanSW"
+    control.vm.network "private_network", ip: "192.168.56.111"
+    control.vm.provider :libvirt do |libvirt|
+      libvirt.driver = "kvm"
+      libvirt.memory = 1024 # may need to lower to 512 for school computers
+      libvirt.cpus = 2 # may need to lower to 1 for school computers
+    end
+    control.vm.provision "file", 
+      source: "confs/k3s-config-worker.yaml",
+      destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "file",
+      source: "confs/ssh/k3s_bootstrap_ed25519",
+      destination: "/home/vagrant/k3s_bootstrap_ed25519"
+    control.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      sudo mkdir -p /etc/rancher/k3s
+      sudo mv /home/vagrant/k3s-config.yaml /etc/rancher/k3s/config.yaml
+      sudo chown root:root /etc/rancher/k3s/config.yaml
+      sudo chmod 644 /etc/rancher/k3s/config.yaml
+      # move ssh key into .ssh folder
+      mv /home/vagrant/k3s_bootstrap_ed25519 /home/vagrant/.ssh/k3s_bootstrap_ed25519
+    SHELL
+    control.vm.provision "shell", path: "scripts/bootstrap_worker.sh"
+  end
+
+end
+```
+
+- Server script
+
+```bash
+#!/bin/bash
+
+set -ux
+# e: exit the script when a command returns an error. 
+# u: treat unset variables as errors. 
+# x: print the command to the terminal before executing.
+
+SERVER_HOST=dpentlanS
+WORKER_HOST=dpentlanSW
+SERVER_IP=192.168.56.110
+WORKER_IP=192.168.56.111
+TOKEN_SRC="/var/lib/rancher/k3s/server/node-token"
+TOKEN_DST_DIR="/home/vagrant/shared"
+TOKEN_DST="${TOKEN_DST_DIR}/token"
+
+echo "Running bootstrap_server.sh"
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y curl
+
+# Install k3s
+curl -sfL https://get.k3s.io | sh -
+
+# Create token file and dir
+mkdir -p "$TOKEN_DST_DIR"
+touch "$TOKEN_DST"
+
+# Wait for token source file to be generated by k3s
+until sudo test -s "$TOKEN_SRC"; do
+  echo "Waiting for k3s token..."
+  sleep 1
+done
+echo "k3s token generated."
+
+# Wait for API server to initialize
+until sudo k3s kubectl get --raw='/readyz' >/dev/null 2>&1; do
+  echo "Waiting for k3s API server..."
+  sleep 2
+done
+echo "k3s API in ready state."
+
+# Copy token to a destination file for access via ssh.
+sudo cat "$TOKEN_SRC" | tee "$TOKEN_DST" > /dev/null
+sudo chmod 644 "$TOKEN_DST"
+
+```
+
+- Worker script
+
+```bash
+#!/bin/bash
+
+set -ux
+# e: exit the script when a command returns an error. 
+# u: treat unset variables as errors. 
+# x: print the command to the terminal before executing.
+
+SERVER_HOST=dpentlanS
+WORKER_HOST=dpentlanSW
+SERVER_IP=192.168.56.110
+WORKER_IP=192.168.56.111
+TOKEN_DST_DIR="/home/vagrant/shared"
+TOKEN_DST="${TOKEN_DST_DIR}/token"
+K3S_TOKEN=""
+
+echo "Running bootstrap_worker.sh"
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y curl
+
+until ssh -i /home/vagrant/.ssh/k3s_bootstrap_ed25519 -o StrictHostKeyChecking=no -o ConnectTimeout=2 vagrant@"$SERVER_IP" "sudo test -s $TOKEN_DST"; do
+  echo "waiting for server token..."
+  sleep 2
+done
+
+K3S_TOKEN="$(ssh -i /home/vagrant/.ssh/k3s_bootstrap_ed25519 -o StrictHostKeyChecking=no -o ConnectTimeout=2 vagrant@"$SERVER_IP" "sudo cat $TOKEN_DST")"
+
+# Install k3s
+curl -sfL https://get.k3s.io | K3S_URL=https://${SERVER_IP}:6443 K3S_TOKEN=${K3S_TOKEN} sh -
+
+```
+
+- Part 1 is finished!
+
+## Part 2
+
+
+
+
+
 
 
 
