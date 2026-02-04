@@ -647,6 +647,10 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${SERVER_IP}:6443 K3S_TOKEN=${K3S
 
 ## Part 2
 
+- Setup a basic Vagrantfile using a lot of the same settings from part 1. Just removed stuff I didn't need. I also changed it to a different box. Now I'm using debian/trixie64 so that I'm obeying the "Latest Stable Version" stipulation in the subject. I'll test with this part and maybe go back to part 1 and update the box there as well as long as I don't encounter too many problems. 
+
+- Box here: https://portal.cloud.hashicorp.com/vagrant/discover/debian/trixie64
+- Proof it's the latest stable version: https://www.debian.org/releases/
 
 
 
