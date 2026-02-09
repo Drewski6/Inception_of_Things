@@ -15,6 +15,9 @@ Vagrant.configure("2") do |config|
     control.vm.provision "file", 
       source: "confs/k3s-config.yaml",
       destination: "/home/vagrant/k3s-config.yaml"
+    control.vm.provision "file", 
+      source: "confs/traefik-values.yaml",
+      destination: "/home/vagrant/traefik-values.yaml"
     control.vm.provision "shell", inline: <<-SHELL
       set -eux
       # move k3s config file and give correct permissions

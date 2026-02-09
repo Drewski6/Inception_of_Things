@@ -647,10 +647,39 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${SERVER_IP}:6443 K3S_TOKEN=${K3S
 
 ## Part 2
 
+### Setting up VM
+
 - Setup a basic Vagrantfile using a lot of the same settings from part 1. Just removed stuff I didn't need. I also changed it to a different box. Now I'm using debian/trixie64 so that I'm obeying the "Latest Stable Version" stipulation in the subject. I'll test with this part and maybe go back to part 1 and update the box there as well as long as I don't encounter too many problems. 
 
 - Box here: https://portal.cloud.hashicorp.com/vagrant/discover/debian/trixie64
 - Proof it's the latest stable version: https://www.debian.org/releases/
+
+### Setting up a deployment
+
+- The smallest unit for this part is the deployment. I'll need to create a deployment first so that I can work on accessing it via a reverse proxy (next step).
+
+- I'm using an image off of dockerhub called hello-kubernetes which I can use to prove that my deployment works and is accessible.
+
+```bash
+sudo k3s kubectl create deployment first-app --image=paulbouwer/hello-kubernetes:1.10.1
+```
+
+- Verify this works with:
+  - Should say 1/1 under READY
+
+```bash
+sudo k3s kubectl get pods
+```
+
+- Normally services can be used to expose pods to so that other apps can communicate with them. You can view the services with this command:
+
+```bash
+sudo k3s kubectl get services
+```
+
+- By default you should see 1 service which is the default kubernetes service.
+
+- Now our first deployment is created. Now we need to set up a basic ingress controller so we can access its contents.
 
 
 
