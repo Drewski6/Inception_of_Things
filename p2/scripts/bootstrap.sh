@@ -21,12 +21,18 @@ until sudo k3s kubectl get --raw='/readyz' >/dev/null 2>&1; do
 done
 echo "k3s API in ready state."
 
-# Install helm (kubernetes package manager)
-curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
-chmod 700 get_helm.sh
-./get_helm.sh
-rm ./get_helm.sh
+# Install helm (kubernetes package manager) directly rather than install script. Had issues with install script from helm docs.
+VER="v4.1.0"
+ARCH="amd64"
+OS="linux"
+URL="https://get.helm.sh/helm-${VER}-${OS}-${ARCH}.tar.gz"
 
-# Install traefik (Ingress Controller)
+curl -fL --http1.1 --retry 20 --retry-all-errors --connect-timeout 20 --max-time 900 \
+  -o /tmp/helm.tgz "$URL"
+tar -xzf /tmp/helm.tgz -C /tmp
+sudo install -m 0755 /tmp/${OS}-${ARCH}/helm /usr/local/bin/helm
+helm version
+
+# Install traefik (Ingress Controller) using helm
 helm repo add traefik https://traefik.github.io/charts
-helm install traefik traefik/traefik -f traefik-values.yaml --wait
+# helm install traefik traefik/traefik -f traefik-values.yaml --wait
