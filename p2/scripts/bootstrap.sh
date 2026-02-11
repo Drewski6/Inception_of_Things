@@ -9,17 +9,9 @@ echo "Running bootstrap.sh"
 
 export DEBIAN_FRONTEND=noninteractive
 
-# Adding these options to my apt-get calls because I was having network issues and these options help
-APT_OPTS=(
-  "-y"
-  "-o" "Acquire::Retries=5"
-  "-o" "Acquire::https::Timeout=30"
-  "-o" "Acquire::http::Timeout=30"
-)
-
-# Update packages and install curl, git, and ca-certificates for ssl certs
-sudo apt-get update "${APT_OPTS[@]}"
-sudo apt-get install "${APT_OPTS[@]}" --no-install-recommends ca-certificates curl # git
+# Update packages and install curl, git, and ca-certificates for ssl certs (options are helping network issues downloading)
+sudo apt-get update -y -o Acquire::Retries=5 -o Acquire::https::Timeout=30 -o Acquire::http::Timeout=30
+sudo apt-get install  -y -o Acquire::Retries=5 -o Acquire::https::Timeout=30 -o Acquire::http::Timeout=30 --no-install-recommends ca-certificates curl git
 sudo update-ca-certificates >/dev/null 2>&1 || true
 
 # Install k3s
@@ -35,7 +27,7 @@ echo "k3s API in ready state."
 # Apply settings from traefik-values.yaml to the pre-installed kubernetes traefik config.
 sudo k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml -n kube-system create configmap traefik-custom-values --from-file=values.yaml=traefik-values.yaml -o yaml --dry-run=client | sudo kubectl apply -f -
 
-sudo k3s kubectl apply -f ./first-app-service.yaml
-sudo k3s kubectl apply -f ./first-app-ingress.yaml
+sudo k3s kubectl apply -f /home/vagrant/k3s/
 
-sudo k3s kubectl create deployment first-app --image=paulbouwer/hello-kubernetes:1.10.1
+# To check the status of the cluster you can use:
+# sudo k3s kubectl get all
