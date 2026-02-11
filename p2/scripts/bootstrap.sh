@@ -7,9 +7,20 @@ set -ux
 
 echo "Running bootstrap.sh"
 
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y curl git
+export DEBIAN_FRONTEND=noninteractive
+
+# Adding these options to my apt-get calls because I was having network issues and these options help
+APT_OPTS=(
+  "-y"
+  "-o" "Acquire::Retries=5"
+  "-o" "Acquire::https::Timeout=30"
+  "-o" "Acquire::http::Timeout=30"
+)
+
+# Update packages and install curl, git, and ca-certificates for ssl certs
+sudo apt-get update "${APT_OPTS[@]}"
+sudo apt-get install "${APT_OPTS[@]}" --no-install-recommends ca-certificates curl # git
+sudo update-ca-certificates >/dev/null 2>&1 || true
 
 # Install k3s
 curl -sfL https://get.k3s.io | sh -
@@ -21,20 +32,10 @@ until sudo k3s kubectl get --raw='/readyz' >/dev/null 2>&1; do
 done
 echo "k3s API in ready state."
 
-# Install helm (kubernetes package manager) directly rather than install script. Had issues with install script from helm docs.
-# VER="v4.1.0"
-# ARCH="amd64"
-# OS="linux"
-# URL="https://get.helm.sh/helm-${VER}-${OS}-${ARCH}.tar.gz"
+# Apply settings from traefik-values.yaml to the pre-installed kubernetes traefik config.
+sudo k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml -n kube-system create configmap traefik-custom-values --from-file=values.yaml=traefik-values.yaml -o yaml --dry-run=client | sudo kubectl apply -f -
 
-# curl -fL --http1.1 --retry 20 --retry-all-errors --connect-timeout 20 --max-time 900 \
-#   -o /tmp/helm.tgz "$URL"
-# tar -xzf /tmp/helm.tgz -C /tmp
-# sudo install -m 0755 /tmp/${OS}-${ARCH}/helm /usr/local/bin/helm
-# helm version
+sudo k3s kubectl apply -f ./first-app-service.yaml
+sudo k3s kubectl apply -f ./first-app-ingress.yaml
 
-# Install traefik (Ingress Controller) using helm
-# helm repo add traefik https://traefik.github.io/charts
-# sudo elm --kubeconfig /etc/rancher/k3s/k3s.yaml install traefik traefik/traefik -f traefik-values.yaml # --wait
-# sudo helm --kubeconfig /etc/rancher/k3s/k3s.yaml list -A
-# sudo helm --kubeconfig /etc/rancher/k3s/k3s.yaml status traefik
+sudo k3s kubectl create deployment first-app --image=paulbouwer/hello-kubernetes:1.10.1

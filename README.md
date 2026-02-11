@@ -681,6 +681,64 @@ sudo k3s kubectl get services
 
 - Now our first deployment is created. Now we need to set up a basic ingress controller so we can access its contents.
 
+- k3s has traefik and helm installed by default. We can use these to configure an ingress controller.
+- Helm is a kubernetes package manager.
+- traefik is basically a reverse proxy that has lots of configuration and plays nicely with kubernetes.
+
+- First we need to make our traefik configuration. We can do this by createing a yaml file with our config.
+
+```yaml
+# traefik-values.yaml
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`dashboard.localhost`)
+    entryPoints:
+      - web
+providers:
+  kubernetesGateway:
+    enabled: false
+gateway:
+  listeners:
+    web:
+      namespacePolicy:
+        from: All
+```
+
+- Next we need to include this in our Vagrantfile as a file to copy over.
+
+```Vagrantfile
+control.vm.provision "file", 
+  source: "confs/traefik-values.yaml",
+  destination: "/home/vagrant/traefik-values.yaml"
+```
+
+- Now we need to apply these settings to k3s.
+
+```bash
+sudo k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml -n kube-system create configmap traefik-custom-values --from-file=values.yaml=traefik-values
+.yaml   -o yaml --dry-run=client | sudo kubectl apply -f -
+```
+
+- This command is a bit complex so I can break it down:
+  - `sudo k3s kubectl` - uses the kubernetes CLI
+  - `--kubeconfig /etc/rancher/k3s/k3s.yaml ` - tells the cli which kubernetes server we want to edit
+  - `-n kube-system` - defines which namespace we're dealing with
+  - `create configmap traefik-custom-values` - Creates a configmap in kubernetes called traefik-custom-values. A configmap is a key value store for non-secret configuration.
+  - `--from-file=values.yaml=traefik-values.yaml` - adds a key to the configmap from a file
+    - Left side `values.yaml` - the name inside the configmap
+    - Right side `traefik-values.yaml` - the name of the local file to be used.
+  - `-o yaml` - generates an output in the form of an yaml file
+  - `--dry-run=client` - Doesnt actually apply the changes, just prints them to stdout
+  - `|` - pipe
+  - `sudo kubectl apply -f -` - reads from stdin what to apply to the current kubernetes cluster.
+
+- With all of this, we are taking the traefik-values.yaml file and we are adding it to the k3s.yaml config for our current cluster.
+  - This seems like a round about way of doing it, but this is the best way to apply changes to our cluster's internal ingress controller
+
+- At this point we have a deployment, and our traefik ingress controller is initialized and we have a basic config in it which we can update later.
+
+- Now we need a ClusterIP Service object that will allow us to open up our deployment to traefik
 
 
 
