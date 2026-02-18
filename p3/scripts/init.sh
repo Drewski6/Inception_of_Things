@@ -96,8 +96,10 @@ kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubuse
 curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
 rm argocd-linux-amd64
+# Wait for argocd to spin up (not the best way. find a better way?)
+sleep 10
 # Display default password for admin
-echo "Your initial secret for admin is..."
+echo -e "Your initial secret for admin is..."
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 # port-forward the webgui for ArgoCD
 kubectl port-forward service/argocd-server -n argocd 8080:443
