@@ -785,6 +785,44 @@ sleep 5
 sudo systemctl --no-pager status docker
 ```
 
+- Now we need to install k3d using the k3d install script
+
+```bash
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+```
+
+- We should get some success text printed to the terminal.
+
+- Now we can use the `k3d` command.
+
+```bash
+k3d --help # to see some simple help message
+```
+
+- Now we install the kubectl system so that we can communicate with our cluster via cli
+
+```bash
+################################################################################
+# Install kubectl on local machine (for interacting with k3d cluster)
+################################################################################
+
+# Download Binary
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+# Download checksum
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+# Validate download
+sha256sum --check <(awk '{print $1"  kubectl"}' kubectl.sha256)
+rm -f kubectl.sha256
+# Install Binary
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# Verify install is working
+kubectl version --client --output=yaml
+rm -f kubectl
+```
+
+- NOTE: I used this tutorial for a bit of the setup: https://www.youtube.com/watch?v=ErhVmAEOUBM
+
+
 
 
 

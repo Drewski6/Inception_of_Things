@@ -4,18 +4,21 @@
 # Setup Script for Part 3: K3d and Argo CD
 ################################################################################
 
+# Exit on error, treat unset vars as errors, print command before executing
 set -eux
 
+################################################################################
 # Install Docker (from Docker docs)
-sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
+################################################################################
 
+# Remove any existing repos so that old repos don't interfere with new setup.
+sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
 # Add Docker's official GPG key:
 sudo apt-get update -y
 sudo apt-get install -y ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
-
 # Add the repository to Apt sources:
 sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
 Types: deb
@@ -24,13 +27,37 @@ Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
 Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc
 EOF
-
 # Update again in case anything changed
 sudo apt-get update -y
-
 # Install the latest version of Docker
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
 # Verify that Docker is running
 sleep 5
 sudo systemctl --no-pager status docker
+
+################################################################################
+# Install K3d
+################################################################################
+
+# Install script from K3d website
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
+################################################################################
+# Install kubectl on local machine (for interacting with k3d cluster)
+################################################################################
+
+# Download Binary
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+# Download checksum
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+# Validate download
+sha256sum --check <(awk '{print $1"  kubectl"}' kubectl.sha256)
+rm -f kubectl.sha256
+# Install Binary
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# Verify install is working
+kubectl version --client --output=yaml
+rm -f kubectl
+
+
+
