@@ -75,9 +75,12 @@ rm -f kubectl
 k3d cluster create
 # Verify
 k3d cluster list
-# 
+# Take the config from the newly created cluster and put it in our current users home and use it as the default context
+whoami
 k3d kubeconfig merge k3s-default --kubeconfig-merge-default
 kubectl config use-context k3d-k3s-default
+# Set config to be owned by user
+chown -R $USER:$USER /home/$USER/.kube
 # Verify nodes are reachable
 kubectl get nodes
 
