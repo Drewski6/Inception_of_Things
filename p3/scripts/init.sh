@@ -10,6 +10,7 @@ set -eux
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   exec sudo -E bash "$0" "$@"
 fi
+echo $SUDO_USER
 
 ################################################################################
 # Install Docker (from Docker docs)
@@ -80,7 +81,7 @@ whoami
 k3d kubeconfig merge k3s-default --kubeconfig-merge-default
 kubectl config use-context k3d-k3s-default
 # Set config to be owned by user
-chown -R $USER:$USER /home/$USER/.kube
+chown -R $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.kube
 # Verify nodes are reachable
 kubectl get nodes
 
