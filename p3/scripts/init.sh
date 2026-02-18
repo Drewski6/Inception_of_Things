@@ -35,9 +35,9 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 sleep 5
 sudo systemctl --no-pager status docker
 # let docker run without sudo (important for using k3d without sudo later on)
-sudo usermod -aG docker "$USER"
-newgrp docker
-docker ps
+# sudo usermod -aG docker "$USER"
+# newgrp docker
+# docker ps
 
 ################################################################################
 # Install K3d
@@ -60,7 +60,7 @@ rm -f kubectl.sha256
 # Install Binary
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 # Verify install is working
-sudo kubectl version --client --output=yaml
+kubectl version --client --output=yaml
 rm -f kubectl
 
 ################################################################################
@@ -68,10 +68,10 @@ rm -f kubectl
 ################################################################################
 
 # Create the cluster
-k3d cluster create
+sudo k3d cluster create
 # Verify
-k3d cluster list
+sudo k3d cluster list
 # 
-k3d kubeconfig merge k3s-default --kubeconfig-merge-default
+sudo k3d kubeconfig merge k3s-default --kubeconfig-merge-default
 kubectl config use-context k3d-k3s-default
 
