@@ -13,7 +13,7 @@ fi
 echo $SUDO_USER
 # Sync system clock before running apt-get. If you don't do this, apt-get fails.
 timedatectl set-ntp true
-systemctl enable --now systemd-timesyncd
+systemctl restart systemd-timesyncd
 
 ################################################################################
 # Install Docker (from Docker docs)
