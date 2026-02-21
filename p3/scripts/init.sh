@@ -11,6 +11,9 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
   exec sudo -E bash "$0" "$@"
 fi
 echo $SUDO_USER
+# Sync system clock before running apt-get. If you don't do this, apt-get fails.
+timedatectl set-ntp true
+systemctl enable --now systemd-timesyncd
 
 ################################################################################
 # Install Docker (from Docker docs)
