@@ -98,7 +98,6 @@ rm argocd-linux-amd64
 sleep 30
 # Display default password for admin
 echo "Your initial secret for admin is..."
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-printf "\n"
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 # port-forward the webgui for ArgoCD
 kubectl port-forward service/argocd-server -n argocd 8080:443
