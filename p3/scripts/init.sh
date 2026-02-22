@@ -98,5 +98,6 @@ rm argocd-linux-amd64
 kubectl -n argocd get pods -w
 # Display default password for admin
 echo "Your initial secret for admin is: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
-# port-forward the webgui for ArgoCD
-kubectl port-forward service/argocd-server -n argocd 8080:443
+# port-forward the webgui for ArgoCD. Run in background and save PID
+kubectl -n argocd port-forward svc/argocd-server 8080:443 > /tmp/argocd-portforward.log 2>&1 &
+echo $! > /tmp/argocd-portforward.pid

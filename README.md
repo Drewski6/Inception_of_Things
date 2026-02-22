@@ -822,8 +822,127 @@ rm -f kubectl
 
 - NOTE: I used this tutorial for a bit of the setup: https://www.youtube.com/watch?v=ErhVmAEOUBM
 
+- Next we needed to create a new cluster, and install ArgoCD
 
+```bash
+################################################################################
+# Create a cluster using k3d
+################################################################################
 
+# Create the cluster
+k3d cluster create
+# Verify
+k3d cluster list
+# Take the config from the newly created cluster and put it in our current users home and use it as the default context
+k3d kubeconfig merge k3s-default --kubeconfig-merge-default
+kubectl config use-context k3d-k3s-default
+# Set config to be owned by user
+chown -R $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.kube
+# Verify nodes are reachable
+kubectl get nodes
+
+################################################################################
+# Install ArgoCD & CLI
+################################################################################
+
+# Install ArgoCD
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# Install ArgoCD CLI
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+# Wait for argocd to spin up
+kubectl -n argocd get pods -w
+# Display default password for admin
+echo "Your initial secret for admin is: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
+# port-forward the webgui for ArgoCD. Run in background and save PID
+kubectl -n argocd port-forward svc/argocd-server 8080:443 > /tmp/argocd-portforward.log 2>&1 &
+echo $! > /tmp/argocd-portforward.pid
+```
+
+- The comments here explain pretty much every command
+
+- This script ended up being pretty easy to create. Mostly, I copy pasted from the various tools setup pages in their docs (ie. Docker docs explains how to install docker, k3d docs shows how to install, etc)
+- There was a fair bit of testing as I created this script. I took a snapshot of the VM before installing anything, then created the script. To test, I ran the script once, saw the outcome, adding git commits as I went. If I didn't like the outcome, I'd stop the VM, revert to the previous snapshot and then pull the most recent commit from github. I'd test again, then make changes and push any changes.
+- This script will setup docker, k3d, create a new k3s cluster (inside docker), install kubectl on the host, and install argocd.
+- This script does not set up the project at all. That can be done within the ArgoCD WebGUI. This script just sets up all the tools needed to get started with the WebGUI.
+- The WebGUI for ArgoCD is available at localhost:8080
+
+### Create Manifest files
+
+- The Manifest files are a part of the project that tells ArgoCD how to build your app in kubernetes.
+- In these manifest files, you'll need to define the Docker Image you want to use and the tag to use. You'll also indicate the topology of your application.
+- In ArgoCD later on when you create the application, you'll indicate which repo to use for configuration. That's the repo we're going to create right now.
+
+- I ran git init inside my p3/confs/dpentlan_IoT_part_3 folder, so I'll have a git repo inside of my project repo. 
+- Inside here, I created another folder called plain_yaml which will hold our manifest files. It cannot be in the root directory of our repo because ArgoCD won't allow that for some reason.
+
+- I created 2 files `deployment.yaml` and `service.yaml`. Similar to in Part 2 when we needed to define the organization of our application, we will do the same here with these files. `deployment.yaml` will describe our deployment and `service.yaml` will describe a service. These will be fairly simple.
+
+`deployment.yaml`
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wil42-app
+  namespace: dev
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: wil42-app
+  template:
+    metadata:
+      labels:
+        app: wil42-app
+    spec:
+      containers:
+        - image: wil42/playground:v1
+          name: wil42-app
+          ports:
+            - containerPort: 8888
+```
+
+`service.yaml`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: wil42-app
+spec:
+  ports:
+  - port: 8888 # Port outside
+    targetPort: 8888 # Port inside
+  selector:
+    app: wil42-app
+```
+
+### Create Application Deployment
+
+- Start by logging into the ArgoCD WebGUI. Username is admin, Password should be printed to your terminal.
+- Click on "+ New APP" to create a new app.
+
+- NOTE: I followed this tutorial for my first setup: https://www.youtube.com/watch?v=JLrR9RV9AFA
+
+- Application name = dpentlan-webapp
+- Project name = default
+- Sync Policy = Manual
+- Leave all boxes unchecked except Auto-create namespace. Check that one.
+- Repository Url = https://github.com/Drewski6/dpentlan_IoT_part_3
+  - For this, I had to create a repo on github. The subject stipulated that it needed my school id in the repo name.
+- Revision = HEAD
+- Path = plain_yaml
+- Destination = https://kubernetes.default.svc
+  - This was the default option for this field. Honestly, I don't know what else it would even put here.
+- Namespace = dev
+  - Must be 'dev' as stipulated by the subject.
+- All other fields left at their default values
+
+- On the top click "Create" and ArgoCD will use the git repo to create your application using the manifest files.
 
 
 

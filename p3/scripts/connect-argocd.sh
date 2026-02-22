@@ -17,5 +17,6 @@ echo "Your initial secret for admin is: $(kubectl -n argocd get secret argocd-in
 kubectl get all -n argocd
 # Print command for loggin into argocd
 echo -e "************************************************************************************\n\nYou can log into the argocd cli with the following command:\n\nargocd login localhost:8080 --username admin --password "$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)" --insecure\n\n************************************************************************************"
-# Port-Forward 443 https server in docker container to outside 8080
-kubectl port-forward service/argocd-server -n argocd 8080:443
+# port-forward the webgui for ArgoCD. Run in background and save PID
+kubectl -n argocd port-forward svc/argocd-server 8080:443 > /tmp/argocd-portforward.log 2>&1 &
+echo $! > /tmp/argocd-portforward.pid
