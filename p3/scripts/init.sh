@@ -95,7 +95,7 @@ curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/lat
 install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
 rm argocd-linux-amd64
 # Wait for argocd to spin up
-kubectl -n argocd get pods -w
+kubectl -n argocd wait --for=condition=Ready pods --all --timeout=10m
 # Display default password for admin
 echo "Your initial secret for admin is: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
 # port-forward the webgui for ArgoCD. Run in background and save PID
