@@ -1,7 +1,8 @@
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "generic/ubuntu2310"
-  config.vm.box_version = "4.3.12"
+  config.vm.box = "debian/trixie64"
+  config.vm.box_version = "13.20260121.1"
+  config.vm.synced_folder ".", "/vagrant", disabled: true # Disable the default synced folder. This is causing problems with my host machine.
 
   config.vm.define "dpentlanS" do |control|
     control.vm.hostname = "dpentlanS"

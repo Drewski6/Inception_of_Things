@@ -104,7 +104,7 @@ vagrant init generic/ubuntu2404
 
 ```Vagrantfile
 Vagrant.configure("2") do |config|
-  config.vm.box = "generic/ubuntu2404" # will change this to the latest stable version available
+  config.vm.box = "generic/ubuntu2404" # will change this to the latest stable version available (debian/trixie64)
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
