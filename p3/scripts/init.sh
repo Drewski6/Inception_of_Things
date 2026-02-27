@@ -77,11 +77,13 @@ k3d cluster create
 k3d cluster list
 # Take the config from the newly created cluster and put it in our current users home and use it as the default context
 
-sudo -u "$SUDO_USER" mkdir -p "/home/$SUDO_USER/.kube"
-sudo -u "$SUDO_USER" k3d kubeconfig merge k3s-default --kubeconfig-merge-default
-sudo -u "$SUDO_USER" kubectl config use-context k3d-k3s-default
+k3d kubeconfig merge k3s-default --kubeconfig-merge-default
+mkdir -p /home/dpentlan/.kube
+cp /root/.kube/config /home/dpentlan/.kube/config
+# chown -R dpentlan:dpentlan /home/dpentlan/.kube
+sudo -u dpentlan kubectl config use-context k3d-k3s-default
+# sudo -u dpentlan kubectl get nodes
 
-# k3d kubeconfig merge k3s-default --kubeconfig-merge-default
 # kubectl config use-context k3d-k3s-default
 # Set config to be owned by user
 chown -R $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.kube
